@@ -12,6 +12,7 @@
 ## TODO
 
 - Add leastconn algorithm
+- Add service discovery
 - Add ability to define multiple listeners
 - Read from YAML config file
 
