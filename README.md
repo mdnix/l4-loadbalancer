@@ -8,11 +8,11 @@
  - Roundrobin selection
  - Scalable connection handling due to go routines
  - Race free due to use of mutexes and atomic operations
+ - Add ability to define multiple listeners
+ - Read from YAML config file
 
 ## TODO
 
 - Add leastconn algorithm
 - Add service discovery
-- Add ability to define multiple listeners
-- Read from YAML config file
 
