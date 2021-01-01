@@ -4,6 +4,9 @@ import (
 	"errors"
 	"io"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/mdnix/roundrobin"
@@ -12,10 +15,7 @@ import (
 )
 
 var (
-	bindAddress string
-	backends    []string
-	algorithm   string
-	output      string
+	configFile string
 )
 
 func copyConnection(src, dst net.Conn, done chan bool) {
@@ -62,24 +62,11 @@ func getNextBackendAddress(service *roundrobin.Service) (string, error) {
 }
 
 func init() {
-	flag.StringVar(&bindAddress, "bindAddress", "127.0.0.1:3000", "define binding address and port")
-	flag.StringSliceVar(&backends, "backends", []string{}, "servers which should receive traffic")
-	//flag.StringVar(&algorithm, "algorithm", "roundrobin", "can be either roundrobin or leastconn")
-	flag.StringVar(&output, "output", "compact", "can be either compact or dict")
-
-	flag.Parse()
-
-	if len(bindAddress) == 0 {
-		log.Fatal("bind address not specified")
-	}
-
-	if len(backends) == 0 {
-		log.Fatal("no backends specified")
-	}
+	flag.StringVarP(&configFile, "config", "c", "", "config file (default is $HOME/.services)")
+	initConfig()
 }
 
-func main() {
-
+func serve(bind string, backends []string) {
 	service, err := roundrobin.NewService(backends)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -87,7 +74,7 @@ func main() {
 		}).Fatal("unable to create service")
 	}
 
-	ln, err := net.Listen("tcp", bindAddress)
+	ln, err := net.Listen("tcp", bind)
 	defer ln.Close()
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -96,7 +83,7 @@ func main() {
 	}
 
 	log.WithFields(log.Fields{
-		"address": bindAddress,
+		"address": bind,
 	}).Info("listener started")
 
 	go scheduleHealthCheck(service, time.Minute*5)
@@ -121,6 +108,17 @@ func main() {
 				}).Warn("unable to handle request")
 			}
 		}()
-
 	}
+}
+
+func main() {
+	for _, s := range config.Services {
+		go serve(s.Bind, s.Backends)
+	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
+	<-c
+
+	log.Info("shutting down loadbalancer")
 }

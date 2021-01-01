@@ -26,7 +26,7 @@ func (ew *errWriter) write(a ...interface{}) {
 }
 
 func writeBalancingFlow(src, lb, dst string) error {
-	switch output {
+	switch config.Global.Output {
 	case "dict":
 		ew := &errWriter{w: os.Stdout}
 

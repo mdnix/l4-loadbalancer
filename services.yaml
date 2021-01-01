@@ -1,0 +1,21 @@
+global:
+  output: "dict"
+
+services:
+  - name: k8s-api
+    bind: "0.0.0.0:6443"
+    backends: "10.10.0.3:6443,10.10.0.4:6443,10.10.0.5:6443"
+    checkInterval: "5m"
+    algorithm: "roundrobin"
+    
+  - name: ingress-http
+    bind: "0.0.0.0:80"
+    backends: "10.10.0.3:80,10.10.0.4:80,10.10.0.5:80"
+    checkInterval: "5m"
+    algorithm: "roundrobin"
+
+  - name: ingress-https
+    bind: "0.0.0.0:443"
+    backends: "10.10.0.3:443,10.10.0.4:443,10.10.0.5:443"
+    checkInterval: "5m"
+    algorithm: "roundrobin"
